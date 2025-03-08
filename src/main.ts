@@ -1,3 +1,4 @@
+
 import './style.css';
 import { Graph, GraphConfigInterface } from '@cosmograph/cosmos';
 import { select, selectAll } from 'd3-selection';
@@ -8,6 +9,7 @@ import scrollama from 'scrollama';
 import {
     pointPositions,
     pointColors,
+    // linkColorsA,
     pointSizes,
     pointLabelToIndex,
     links,
@@ -17,8 +19,11 @@ import {
 import { CosmosLabels } from './labels';
 
 const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+const canvasContainer = document.querySelector('#cosmos-01-container') as HTMLCanvasElement;
 // const canvas = select('#cosmos-01-canvas')
 const div = document.querySelector('#labels') as HTMLDivElement;
+const mainContent = document.querySelector('#main-content') as HTMLDivElement;
+
 // canvas.attr(class, 'lowlight');
 
 const cosmosLabels = new CosmosLabels(div);
@@ -59,6 +64,8 @@ scroller
   .onStepEnter(handleStepEnter)
   .onStepExit(handleStepExit);
 
+
+
 // Scroll event handlers
 function handleStepEnter({ index, direction }) {
   console.log(`Entering step ${index}, direction: ${direction}`);
@@ -67,8 +74,24 @@ function handleStepEnter({ index, direction }) {
 //   if (index === 1 && direction === 'down') {
     if (index === 0) {
 
-        currentZoom = 0.5;
-        graph.setZoomLevel(currentZoom, 500);
+      currentZoom = 0.5;
+      graph.setZoomLevel(currentZoom, 500);
+      mainContent.classList.add('visible');
+      mainContent.classList.add('top-layer');
+
+      mainContent.classList.remove('invisible');
+      mainContent.classList.remove('bottom-layer');
+
+
+      canvas.classList.add('bottom-layer');
+      canvas.classList.remove('top-layer');
+
+      cosmosLabels.labelRenderer.draw(false);
+
+
+
+      
+    
         
     }
 
@@ -76,6 +99,21 @@ function handleStepEnter({ index, direction }) {
     
     currentZoom = 0.75;
     graph.setZoomLevel(currentZoom, 500);
+    mainContent.classList.add('invisible');
+    mainContent.classList.add('bottom-layer');
+    mainContent.classList.remove('visible');
+    mainContent.classList.remove('top-layer');
+
+
+    canvas.classList.add('top-layer');
+    canvas.classList.remove('bottom-layer');
+    
+    // div.classList.add('top-layer');
+
+    cosmosLabels.labelRenderer.draw(true);
+    cosmosLabels.update(graph);
+
+
    
   }
 
@@ -83,6 +121,27 @@ function handleStepEnter({ index, direction }) {
     
     currentZoom = 3;
     graph.setZoomLevel(currentZoom, 500);
+    mainContent.classList.add('invisible');
+    mainContent.classList.add('bottom-layer');
+
+    mainContent.classList.remove('visible');
+    mainContent.classList.remove('top-layer');
+
+    canvas.classList.add('top-layer');
+    canvas.classList.remove('bottom-layer');
+    // graph.setLinkColors(244,253,117,0.8);
+    // graph.setLinkColors(new Float32Array(linkColorsA));
+    // graph.render();
+    // console.log("new link color");
+
+    cosmosLabels.labelRenderer.draw(true);
+    cosmosLabels.update(graph);
+
+
+
+
+
+
    
   }
 
@@ -90,6 +149,23 @@ function handleStepEnter({ index, direction }) {
     
     currentZoom = 0.3;
     graph.setZoomLevel(currentZoom, 500);
+    mainContent.classList.add('visible');
+    mainContent.classList.add('top-layer');
+    mainContent.classList.remove('invisible');
+    mainContent.classList.remove('bottom-layer');
+
+
+    canvas.classList.remove('top-layer');
+    canvas.classList.add('bottom-layer');
+
+
+    
+    // mainContent.classList.add('visible');
+    cosmosLabels.labelRenderer.draw(false);
+    canvas.classList.add('lowlight');
+
+
+
    
   }
 
@@ -99,7 +175,19 @@ function handleStepEnter({ index, direction }) {
   if ( index === 4) {
     currentZoom = 8; 
     graph.setZoomLevel(currentZoom, 500); 
-    canvas.classList.add('lowlight');
+    mainContent.classList.add('visible');
+    mainContent.classList.add('top-layer');
+    mainContent.classList.remove('invisible');
+    mainContent.classList.remove('bottom-layer');
+    // canvas.classList.add('lowlight');
+
+    canvas.classList.remove('top-layer');
+    canvas.classList.add('bottom-layer');
+
+    cosmosLabels.labelRenderer.draw(true);
+    cosmosLabels.update(graph);
+
+
 
     
     // if ((index === 2 && direction === 'down') || (index === 0 && direction === 'up')) {
@@ -137,7 +225,9 @@ export const config: GraphConfigInterface = {
     linkWidth: 0.1,
     // linkColor: 'rgba(236,204, 5, 0.5)',
     // linkColor: 'rgba(85,176,148,0.3)',
+    
     linkColor: 'rgba(244,253,117,0.1)',
+    // linkColor: 'rgba(244,253,117,0.0)',
     linkArrows: false,
     fitViewOnInit: false,
     enableDrag: true,
@@ -187,14 +277,14 @@ graph.trackPointPositionsByIndices(
 
 let hoveredNodeIndex: number | undefined = undefined;
 
-function showEgoNetworkLabels(nodeIndex: number) {
-    const visibleNodes = new Set<number>([nodeIndex]);
-    cosmosLabels.setVisibleNodes(visibleNodes);
-}
+  // function showEgoNetworkLabels(nodeIndex: number) {
+  //     const visibleNodes = new Set<number>([nodeIndex]);
+  //     // cosmosLabels.setVisibleNodes(visibleNodes);
+  // }
 
-function hideAllLabels() {
-    cosmosLabels.setVisibleNodes(new Set());
-}
+  // function hideAllLabels() {
+  //     // cosmosLabels.setVisibleNodes(new Set());
+  // }
 
 function handleCanvasHover(event: MouseEvent) {
     const rect = canvas.getBoundingClientRect();
@@ -240,17 +330,17 @@ function handleCanvasHover(event: MouseEvent) {
                 console.log('Hovered Node ID:', nodeId);
                 console.log('Hovered Node Metadata:', metadata);
 
-                showEgoNetworkLabels(closestPointIndex);
+                // showEgoNetworkLabels(closestPointIndex);
             } else {
                 console.warn('Node ID is undefined.');
             }
         }
     } else {
         // If the mouse is not over a node
-        if (hoveredNodeIndex !== undefined) {
-            hoveredNodeIndex = undefined;
-            hideAllLabels();
-        }
+        // if (hoveredNodeIndex !== undefined) {
+        //     hoveredNodeIndex = undefined;
+        //     hideAllLabels();
+        // }
     }
 
     cosmosLabels.update(graph);
@@ -260,7 +350,7 @@ canvas.addEventListener('mousemove', handleCanvasHover);
 
 canvas.addEventListener('mouseout', () => {
     hoveredNodeIndex = undefined;
-    hideAllLabels();
+    // hideAllLabels();
     cosmosLabels.update(graph);
 });
 
