@@ -600,3 +600,107 @@ When stepping into step 4, with the prefixed and projected positions of nodes, t
 
 ### Perplexity AI:
 In the data.ts file, currently, nodes are being colored by checking their type, if "topic" or "document" with prefixed colors for each one.  Lets explore now coloring each node by checking their "topic_label_str" value, and assigning the same random color, using d3 color palette generation functionality optimal for categorical color coding, to each found "topic_label_str", which should be applied consistently to each code sharing the same "topic_label_str" value. All colors should have 0.5 opacity.
+
+
+Use the same logic but instead of pulling colors from d3 do it from a fixed array of rgba strings, following this color list, with a 0.5 alpha value in each one:
+```
+rgb(207,153,92)
+rgb(87,124,235)
+rgb(140,179,63)
+rgb(90,87,186)
+rgb(92,192,106)
+rgb(176,115,217)
+rgb(198,178,68)
+rgb(76,53,137)
+rgb(161,187,105)
+rgb(205,110,198)
+rgb(74,192,143)
+rgb(194,71,145)
+rgb(62,125,60)
+rgb(115,44,115)
+rgb(51,212,209)
+rgb(204,63,92)
+rgb(88,136,224)
+rgb(200,136,50)
+rgb(88,139,207)
+rgb(193,83,44)
+rgb(158,129,207)
+rgb(98,114,30)
+rgb(220,128,187)
+rgb(169,99,55)
+rgb(138,43,89)
+rgb(213,87,79)
+rgb(217,90,136)
+rgb(132,39,32)
+rgb(221,111,120)
+rgb(149,48,70)
+```
+
+
+### Perplexity AI:
+Currently labels, which are drawn in their own HTML canvas, are not visible in any step and their corresponding cosmosLabels label rendered object has an empty array. Only "topic" type nodes display labels. Check the following main.ts, labels.ts and style.css files, examine what might be happening and propose a solution so that topic node labels are visible in the steps where cosmosLabels.labelRenderer.draw(true);
+
+### Perplexity AI:
+Please check carefully the following current Cosmos documentation and look for relevant methods which can solve this label display issue. Propose an implementation as close as possible to the code I gave you:
+
+[Cosmos API documentation]
+
+
+### Perplexity AI:
+Got an error, am I missing someting? Keep looking for a solution as close to the available Cosmos documentation and methods:
+
+```
+Uncaught TypeError: graph.getCanvas is not a function
+```
+
+### Perplexity AI:
+Implemented the code and the CSS class. It does not return any errors, but there are still no labels and the array inside cosmosLabels is still empty.
+
+
+### Perplexity AI:
+I have a working prototype of a Vite app with Cosmos and Scrollama implemented for visualizing data in graph simulation and and prefixed embeddings x,y coordinates, depending on the scrollama step.
+
+Before reviewing my code, examine the following Cosmos documentation and try to understand and deeply as possible how labels are handled with Cosmos methods. 
+
+Make a short text based outline, no code yet, of how labels should be handled for populating them from data and displaying them conditionally, based on data (such as a type property in the data, used as reference to display or not labels). 
+
+Try to understand specially how labels are handled by the Cosmos renderer depending on the currently visible nodes.
+
+No code yet, just deep understanding and clear explanations.
+
+
+### Perplexity:
+You are right, Cosmos uses labels with @interacta/css-labels, here is the example code for adding and customizing point labels from the Cosmos documentation:
+
+Please try again to outline the label functionality based solely on insights from these code example, no custom methods yet.
+
+Cosmos ineracta css labels example:
+
+[Cosmos interacta/css-labels example from documentation]
+
+
+### Perplexity:
+Based on this knowledge about Cosmos and interacta labels, specially con the CosmosLabels class, now check my current code, composed by main.ts, data.ts, labels.ts and style.css files.
+
+Currently, no labels are visible, while points with "topic" type in their metadata should be displaying labels in steps where labelRenderer is set to true. Please examine my code, try to change only what is strictly necessary to make the labels visible as expected and customizable as far as the interacta/css-labels library allows.
+
+[complete code fromt main.ts, data.ts, labels.ts and style.css]
+
+
+
+## Claude 3.7 Sonnet:
+I have a working prototype of a Vite app with Cosmos and Scrollama implemented for visualizing data in graph simulation and and prefixed embeddings x,y coordinates, depending on the scrollama step.
+Currently labels, which are drawn in their own HTML canvas, are not visible in any step and their corresponding cosmosLabels class based object has an empty array. Only "topic" type nodes should display labels. Check the following main.ts, labels.ts and style.css files, examine what might be happening and propose a solution so that topic node labels are visible in the steps where cosmosLabels.labelRenderer.draw(true);
+Cosmos uses interacta/css-labels methods.
+
+
+## Claude 3.7 Sonnet:
+Thank you, the 21 corresponding topic labels are now being populated in the array inside cosmosLabels, but their display and positioning is erratic. The data issues are solved, now it has do to with updating positions. In the first steps, position of nodes changes dynamically by the graph simulation. When entering step 3, they set to a projected/scaled coordinate space, as defined in this data.ts file
+
+Thank you, it is almost working. It is now showing label with the implemented timeout, but just one label of the 21 which are loaded. It may be unrelated, but the label being displayed is the only one that does not have valid x,y values in the data. But this should not be an issue, specially in the steps where graph simulation determines the positions. Please examine the situation and suggest possible adjustments or things to check to see if I implemented the code correctly.
+
+
+## Claude 3.7 Sonnet:
+I have a working prototype of a Vite app with Cosmos and Scrollama implemented for visualizing data in graph simulation and and prefixed embeddings x,y coordinates, depending on the scrollama step. It is currently loading into the cosmosLabels class the 21 desired labels to be displayed, which are "topic" type from their point metadata, but the current implementation allows only one displaying at a time with the set timeout, it should try to always display all 21 of them or at least of all the visible topic points. Please check the following main.ts and labels.ts and try to propose a solution so that topic labels can be displayed simultaneously.
+
+Keep the step structure and event handling of scrollama as it, propose a solution with the closest logic possible to the current implementation.
