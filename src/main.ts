@@ -1,251 +1,399 @@
-import "./style.css";
-import { Graph, GraphConfigInterface } from "@cosmograph/cosmos";
-import { select, selectAll } from "d3-selection";
-import scrollama from "scrollama";
+// main.ts
+import './style.css';
+import { Graph, GraphConfigInterface } from '@cosmograph/cosmos';
+import { select } from 'd3-selection';
+import scrollama from 'scrollama';
 
+
+// Import the cosmosSpaceSize from data.ts
 import {
   pointPositions,
   pointColors,
-  // linkColorsA,
   pointSizes,
   pointLabelToIndex,
   links,
+  pointIndexToLabel,
+  linkColorsHigh,
+  linkColorsLow,
+  linkColorsDisabled,
   pointMetadata,
-  // pointIndexToLabel,
-  // sentences
-} from "./data";
-import { CosmosLabels } from "./labels";
+  sentences,
+  cosmosSpaceSize // Import the space size
+} from './data';
 
-const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-// const canvasContainer = document.querySelector('#cosmos-01-container') as HTMLCanvasElement;
-// const canvas = select('#cosmos-01-canvas')
-const div = document.querySelector("#labels") as HTMLDivElement;
-const mainContent = document.querySelector("#main-content") as HTMLDivElement;
 
-// canvas.attr(class, 'lowlight');
-//
-const cosmosLabels = new CosmosLabels(div);
 
-// Current question, instance and location:
-let currentLocationLabel = ["Barcelona"];
-let currentSourceLabel = ["decidim.barcelona"];
-// console.log(visited);
+import { CosmosLabels } from './labels';
+
+const initialZoom = 1.5;
+let currentZoom = initialZoom;
+
+
+// Update the Cosmos settings
+export const config: GraphConfigInterface = {
+  backgroundColor: 'rgb(47, 40, 54)',
+  linkWidth: 0.1,
+  linkColor: linkColorsLow,
+  // linkColor: 'rgba(244,253,117,0.2)',
+  linkArrows: false,
+  fitViewOnInit: false,
+  enableDrag: true,
+  disableZoom: true,
+  spaceSize: cosmosSpaceSize, // Use the same space size as in data normalization
+  disableSimulation: false,
+  simulationGravity: 0.02,
+  simulationLinkDistance: 200,
+  simulationLinkSpring: 1,
+  simulationRepulsion: 0.2,
+  simulationRepulsionTheta: 1.5,
+  simulationFriction: 1.5,
+  // simulationDecay: 100000,
+  simulationDecay: 10000,
+  onSimulationTick: () => {
+      const trackedPointPositions = graph.getTrackedPointPositionsMap();
+      let i = 0;
+      trackedPointPositions.forEach((positions, pointIndex) => {
+          updatedPointPositions[pointIndex * 2] = positions[0];
+          updatedPointPositions[pointIndex * 2 + 1] = positions[1];
+          i++;
+      });
+      cosmosLabels.update(graph);
+  },
+  onZoom: () => graph && cosmosLabels.update(graph),
+  // graph.setPointPositions(new Float32Array(pointPositions));
+  pointPositions: new Float32Array(pointPositions)
+};
+
+
+
+
+
+const canvas = document.querySelector('canvas') as HTMLCanvasElement;
+const labelsDiv = document.querySelector('#labels') as HTMLDivElement;
+const mainContent = document.querySelector('#main-content') as HTMLDivElement;
+const cosmosLabels = new CosmosLabels(labelsDiv);
+
+let currentLocationLabel = ['Barcelona'];
+let currentSourceLabel = ['decidim.barcelona'];
 console.log(currentLocationLabel);
 console.log(currentSourceLabel);
 
-// visited counter
-// let counter = 0;
-
-const currentSourceContainer = select("#current-src");
+const currentSourceContainer = select('#current-src');
 currentSourceContainer.html(currentLocationLabel);
 
-const currentLocationContainer = select("#current-location");
+const currentLocationContainer = select('#current-location');
 currentLocationContainer.html(currentSourceLabel);
 
 // Scrollama setup
 const scroller = scrollama();
 
 // Setup your steps
-const steps = [
-  "section-0",
-  "section-1",
-  "section-2",
-  "section-3",
-  "section-4",
-].map((id) => document.getElementById(id));
-let currentZoom = 0.5;
+const steps = ['section-0', 'section-1', 'section-2', 'section-3', 'section-4', 'section-5'].map(id => document.getElementById(id));
+// let currentZoom = 0.45;
 
-// Scroller
 // Initialize Scrollama
 scroller
-  .setup({
-    step: steps,
-    offset: 0.5,
-    debug: false,
-  })
-  .onStepEnter(handleStepEnter)
-  .onStepExit(handleStepExit);
+    .setup({
+        step: steps,
+        offset: 0.5,
+        debug: false
+    })
+    .onStepEnter(handleStepEnter)
+    .onStepExit(handleStepExit);
 
 // Scroll event handlers
 function handleStepEnter({ index, direction }) {
-  console.log(`Entering step ${index}, direction: ${direction}`);
+    console.log(`Entering step ${index}, direction: ${direction}`);
 
-  // Zoom in when scrolling down to section-01
-  //   if (index === 1 && direction === 'down') {
-  if (index === 0) {
-    currentZoom = 0.5;
-    graph.setZoomLevel(currentZoom, 500);
-    mainContent.classList.add("visible");
-    mainContent.classList.add("top-layer");
+    if (index === 0) {
+      // graph.setLinkColors(new Float32Array(linkColorsHigh));
 
-    mainContent.classList.remove("invisible");
-    mainContent.classList.remove("bottom-layer");
+      // graph.setLinkColors(linkColorsLow);
 
-    canvas.classList.add("bottom-layer");
-    canvas.classList.remove("top-layer");
 
-    cosmosLabels.labelRenderer.draw(false);
+        //       // Disable simulation and freeze nodes
+        // graph.setConfig({  
+        //   // spaceSize: 4096,
+        //   disableSimulation: true, // Will use fixed positions
+        //   simulationDecay: 0 // Immediate stop
+        // });
+
+        graph.setConfig({
+            spaceSize: cosmosSpaceSize,
+            disableSimulation: false, // Will use fixed positions
+            // simulationDecay: 100000, // Immediate stop
+            simulationDecay: 10000, // Immediate stop
+            linkWidth: 0.1,
+            linkColor: linkColorsLow
+        });
+        // graph.setPointPositions(new Float32Array(pointPositions));
+        //       // Disable simulation and freeze nodes
+        console.log("graph Config", graph.setConfig)
+        cosmosLabels.update(graph);
+        cosmosLabels.labelRenderer.draw(false);
+
+        
+        // Reset positions to the original normalized positions if needed
+        // graph.setPointPositions(new Float32Array(pointPositions), 0);
+        // graph.setPointPositions(new Float32Array(pointPositions));
+        
+        // currentZoom = 0.45;
+        currentZoom = initialZoom;
+        graph.setZoomLevel(currentZoom, 500);
+
+
+        // currentZoom = 0.5;
+        // graph.setZoomLevel(currentZoom, 500);
+        mainContent.classList.add('visible');
+        mainContent.classList.add('top-layer');
+        mainContent.classList.remove('invisible');
+        mainContent.classList.remove('bottom-layer');
+        canvas.classList.add('bottom-layer');
+        canvas.classList.remove('top-layer');
+
+        // cosmosLabels.update(graph);
+        graph.render();
+        
+    }
+
+    if (index === 1) {
+        // graph.setLinkColors(linkColorsHigh);
+
+      graph.setConfig({
+        linkWidth: 0.0,
+        linkColor: linkColorsDisabled,
+        disableSimulation: false,
+        simulationDecay: 10000
+      });
+
+
+        currentZoom = 3;
+        graph.setZoomLevel(currentZoom, 500);
+        mainContent.classList.add('invisible');
+        mainContent.classList.add('bottom-layer');
+        mainContent.classList.remove('visible');
+        mainContent.classList.remove('top-layer');
+        canvas.classList.add('top-layer');
+        canvas.classList.remove('bottom-layer');
+        cosmosLabels.update(graph);
+        cosmosLabels.labelRenderer.draw(true);
+        // cosmosLabels.update(graph);
+        graph.render();
+
+    }
+
+    if (index === 2) {
+        // graph.setLinkColors(new Float32Array(linkColorsHigh));
+        graph.setConfig({
+          linkWidth: 0.4,
+          linkColor: linkColorsHigh,
+          disableSimulation: false,
+          simulationDecay: 5000,
+
+
+      });
+      cosmosLabels.update(graph);
+
+
+        currentZoom = 1.5;
+        graph.setZoomLevel(currentZoom, 500);
+        mainContent.classList.add('invisible');
+        mainContent.classList.add('bottom-layer');
+        mainContent.classList.remove('visible');
+        mainContent.classList.remove('top-layer');
+        canvas.classList.add('top-layer');
+        canvas.classList.remove('bottom-layer');
+        cosmosLabels.update(graph);
+        cosmosLabels.labelRenderer.draw(true);
+        console.log("cosmosLabels", cosmosLabels)
+        graph.render();
+
+
+        // labelsDiv.add('invisible');
+        // cosmosLabels.update(graph);
+    }
+
+    if (index === 3) {
+        // graph.setLinkColors(new Float32Array(linkColorsDisabled));
+      //   graph.setConfig({
+      //     linkWidth: 0.1,
+      //     linkColor: linkColorsLow,
+
+
+      // });
+
+
+        graph.setPointPositions(new Float32Array(pointPositions));
+              //       // Disable simulation and freeze nodes
+        console.log("graph Config", graph.setConfig)
+        graph.setConfig({  
+          // spaceSize: 4096,
+          disableSimulation: true, // Will use fixed positions
+          simulationDecay: 0, // Immediate stop
+          linkWidth: 0.1,
+          linkColor: linkColorsDisabled,
+        });
+        // graph.fitViewByPointPositions(new Float32Array(pointPositions), 2500, 1.1);
+        cosmosLabels.update(graph);
+        cosmosLabels.labelRenderer.draw(true);
+
+        graph.render();
+
+
+
+        currentZoom = 0.50;
+        graph.setZoomLevel(currentZoom, 500);
+        mainContent.classList.add('visible');
+        mainContent.classList.add('top-layer');
+        mainContent.classList.remove('invisible');
+        mainContent.classList.remove('bottom-layer');
+        canvas.classList.remove('top-layer');
+        canvas.classList.add('bottom-layer');
+        graph.render();
+
+        // labelsDiv.add('invisible');
+        // cosmosLabels.labelRenderer.draw(false);
+
+        // cosmosLabels.update(graph);
+
+        // canvas.classList.add('lowlight');
+
+
+        // Enable simulation with appropriate settings
+        // graph.setConfig({
+        //   spaceSize: cosmosSpaceSize,
+        //   disableSimulation: false, // Enable simulation
+        //   simulationDecay: 10000, // Use a high decay to slow down movement
+        //   simulationGravity: 0.07,
+        //   simulationRepulsion: 0.2
+        // });
+    }
+
+    if (index === 4) {
+      // graph.setLinkColors(new Float32Array(linkColorsDisabled));
+    //   graph.setConfig({
+    //     linkWidth: 0.1,
+    //     linkColor: linkColorsLow,
+
+
+    // });
+
+
+      graph.setPointPositions(new Float32Array(pointPositions));
+            //       // Disable simulation and freeze nodes
+      console.log("graph Config", graph.setConfig)
+      graph.setConfig({  
+        // spaceSize: 4096,
+        disableSimulation: true, // Will use fixed positions
+        simulationDecay: 0, // Immediate stop
+        linkWidth: 0.1,
+        linkColor: linkColorsDisabled,
+      });
+      // graph.fitViewByPointPositions(new Float32Array(pointPositions), 2500, 1.1);
+      // graph.fitViewByPointIndices([0], 20000, 0.1);
+      cosmosLabels.update(graph);
+      graph.fitViewByPointPositions(new Float32Array(pointPositions), 2500, 1.1);
+
+      cosmosLabels.labelRenderer.draw(true);
+
+      graph.render();
+
+
+
+      currentZoom = 0.25;
+      graph.setZoomLevel(currentZoom, 500);
+      mainContent.classList.add('invisible');
+      mainContent.classList.add('bottom');
+      mainContent.classList.remove('visible');
+      mainContent.classList.remove('top-layer');
+      canvas.classList.remove('bottom-layer');
+      canvas.classList.add('top-layer');
+      // labelsDiv.add('invisible');
+      // cosmosLabels.labelRenderer.draw(false);
+
+      // cosmosLabels.update(graph);
+
+      // canvas.classList.add('lowlight');
+
+
+      // Enable simulation with appropriate settings
+      // graph.setConfig({
+      //   spaceSize: cosmosSpaceSize,
+      //   disableSimulation: false, // Enable simulation
+      //   simulationDecay: 10000, // Use a high decay to slow down movement
+      //   simulationGravity: 0.07,
+      //   simulationRepulsion: 0.2
+      // });
   }
 
-  if (index === 1) {
-    currentZoom = 0.75;
-    graph.setZoomLevel(currentZoom, 1000); // Zoom transition
-    mainContent.classList.add("invisible");
-    mainContent.classList.add("bottom-layer");
-    mainContent.classList.remove("visible");
-    mainContent.classList.remove("top-layer");
+    if (index === 5) {
+        graph.setConfig({
+          linkWidth: 0.0,
+          linkColor: linkColorsDisabled,
+          disableSimulation: false,
+          simulationDecay: 10000,
 
-    canvas.classList.add("top-layer");
-    canvas.classList.remove("bottom-layer");
+        });
+        cosmosLabels.update(graph);
 
-    // div.classList.add('top-layer');
+        currentZoom = 8;
+        graph.setZoomLevel(currentZoom, 500);
+        mainContent.classList.add('visible');
+        mainContent.classList.add('top-layer');
+        mainContent.classList.remove('invisible');
+        mainContent.classList.remove('bottom-layer');
+        canvas.classList.remove('top-layer');
+        canvas.classList.add('bottom-layer');
+        // cosmosLabels.update(graph);
+        cosmosLabels.labelRenderer.draw(true);
+        // cosmosLabels.update(graph);
+        graph.render();
 
-    cosmosLabels.labelRenderer.draw(true);
-    cosmosLabels.update(graph);
-  }
+    }
 
-  if (index === 2) {
-    currentZoom = 3;
-    graph.setZoomLevel(currentZoom, 500); // Zoom transition
-    mainContent.classList.add("invisible");
-    mainContent.classList.add("bottom-layer");
-
-    mainContent.classList.remove("visible");
-    mainContent.classList.remove("top-layer");
-
-    canvas.classList.add("top-layer");
-    canvas.classList.remove("bottom-layer");
-    // graph.setLinkColors(244,253,117,0.8);
-    // graph.setLinkColors(new Float32Array(linkColorsA));
-    // graph.render();
-    // console.log("new link color");
-
-    cosmosLabels.labelRenderer.draw(true);
-    cosmosLabels.update(graph);
-  }
-
-  if (index === 3) {
-    currentZoom = 0.3;
-    graph.setZoomLevel(currentZoom, 500); // Zoom transition
-    mainContent.classList.add("visible");
-    mainContent.classList.add("top-layer");
-    mainContent.classList.remove("invisible");
-    mainContent.classList.remove("bottom-layer");
-
-    canvas.classList.remove("top-layer");
-    canvas.classList.add("bottom-layer");
-
-    // mainContent.classList.add('visible');
-    cosmosLabels.labelRenderer.draw(false);
-    canvas.classList.add("lowlight");
-  }
-
-  // Zoom out when scrolling to section-02 or back to section-00
-  //   if ((index === 2 && direction === 'down') || (index === 0 && direction === 'up')) {
-  if (index === 4) {
-    currentZoom = 8;
-    graph.setZoomLevel(currentZoom, 500); // Zoom transition
-    mainContent.classList.add("visible");
-    mainContent.classList.add("top-layer");
-    mainContent.classList.remove("invisible");
-    mainContent.classList.remove("bottom-layer");
-    // canvas.classList.add('lowlight');
-
-    canvas.classList.remove("top-layer");
-    canvas.classList.add("bottom-layer");
-
-    cosmosLabels.labelRenderer.draw(true);
-    cosmosLabels.update(graph);
-
-    // if ((index === 2 && direction === 'down') || (index === 0 && direction === 'up')) {
-    // currentZoom = 0.5;
-    // graph.setZoomLevel(0.5);
-  }
-
-  // Add CSS class to reveal the current section
-  steps[index].classList.add("is-active");
+    steps[index].classList.add('is-active');
 }
 
 function handleStepExit({ index, direction }) {
-  console.log(`Exiting step ${index}, direction: ${direction}`);
-
-  // Remove CSS class to hide the previous section
-  steps[index].classList.remove("is-active");
+    console.log(`Exiting step ${index}, direction: ${direction}`);
+    steps[index].classList.remove('is-active');
 }
 
-// Update Scrollama on window resize
-window.addEventListener("resize", scroller.resize);
+window.addEventListener('resize', scroller.resize);
 
 // Cosmos settings
-// Store the updated point positions
 let updatedPointPositions: number[] = [...pointPositions];
 
-// Graph visualization configuration
 let graph: Graph;
-export const config: GraphConfigInterface = {
-  backgroundColor: "rgb(47, 40, 54)",
-  linkWidth: 0.1,
-  linkColor: "rgba(244,253,117,0.1)",
-  linkArrows: false,
-  fitViewOnInit: false,
-  enableDrag: true,
-  // simulationGravity: 0.8,
-  // simulationLinkDistance: 20,
-  // simulationLinkSpring: 0.8,
-  // simulationRepulsion: 0.9,
-  // setZoomLevel: [10,20],
-  disableZoom: true,
-  simulationGravity: 0.02, // Controls layout compactness
-  simulationLinkDistance: 40,
-  simulationLinkSpring: 1, // Connection stiffness
-  simulationRepulsion: 0.2,
-  simulationRepulsionTheta: 1,
-  // simulationRepulsionFromMouse: 100,
-  simulationFriction: 1.5,
-  // simulationCluster: 0.5,
-  simulationDecay: 10000,
-
-  onSimulationTick: () => {
-    // Update the positions on each tick
-    const trackedPointPositions = graph.getTrackedPointPositionsMap();
-    let i = 0;
-    trackedPointPositions.forEach((positions, pointIndex) => {
-      updatedPointPositions[pointIndex * 2] = positions[0];
-      updatedPointPositions[pointIndex * 2 + 1] = positions[1];
-      i++;
-    });
-    cosmosLabels.update(graph);
-  },
-  onZoom: () => graph && cosmosLabels.update(graph),
-};
 
 graph = new Graph(canvas, config);
+
+// 1. Set point positions using the new pointPositions from data.ts
 graph.setPointPositions(new Float32Array(pointPositions));
 graph.setPointColors(new Float32Array(pointColors));
+
 graph.setPointSizes(new Float32Array(pointSizes));
 graph.setLinks(new Float32Array(links));
+graph.setLinkColors(new Float32Array(linkColorsHigh));
+
 graph.render();
 graph.setZoomLevel(currentZoom);
 
-// Track all points
+// 2. Track all points, using sentence label to get the ID from label mapping
 graph.trackPointPositionsByIndices(
-  Array.from(pointLabelToIndex.keys()).map(
-    (label) => pointLabelToIndex.get(label) as number
-  )
+    sentences.map(sentence => pointLabelToIndex.get(sentence.label) as number)
 );
 
 let hoveredNodeIndex: number | undefined = undefined;
 
-// function showEgoNetworkLabels(nodeIndex: number) {
-//     const visibleNodes = new Set<number>([nodeIndex]);
-//     // cosmosLabels.setVisibleNodes(visibleNodes);
-// }
 
-// function hideAllLabels() {
-//     // cosmosLabels.setVisibleNodes(new Set());
-// }
 
-// Node hover handling for metadata retrieval
+
+
+
+
+
+// // Node hover handling for metadata retrieval
 function handleCanvasHover(event: MouseEvent) {
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -271,16 +419,36 @@ function handleCanvasHover(event: MouseEvent) {
     }
   }
 
-  if (closestPointIndex !== undefined && minDistance < 10) {
+  // if (closestPointIndex !== undefined && minDistance < 10) {
+  //   if (closestPointIndex !== hoveredNodeIndex) {
+  //     hoveredNodeIndex = closestPointIndex;
+  //     const metadata = pointMetadata[closestPointIndex];
+
+  //     if (metadata) {
+  //       // const nodeType = metadata.type || "unknown";
+  //       // console.log(`Hovered over ${nodeType} node`);
+  //       // console.log("Node metadata:", metadata);
+
+
+  //       const nodeType = metadata?.type || "unknown";
+  //       console.log(`Hovered over ${nodeType} node`);
+  //       console.log("Node metadata:", metadata || "No metadata available");
+
+  //     }
+  //   }
+  // } else {
+  //   hoveredNodeIndex = undefined;
+  // }
+
+  // cosmosLabels.update(graph);
+  if (closestPointIndex !== undefined && minDistance < 5) {
     if (closestPointIndex !== hoveredNodeIndex) {
       hoveredNodeIndex = closestPointIndex;
       const metadata = pointMetadata[closestPointIndex];
 
-      if (metadata) {
-        const nodeType = metadata.type || "unknown";
-        console.log(`Hovered over ${nodeType} node`);
-        console.log("Node metadata:", metadata);
-      }
+      const nodeType = metadata?.type || "unknown";
+      console.log(`Hovered over ${nodeType} node`);
+      console.log("Node metadata:", metadata || "No metadata available");
     }
   } else {
     hoveredNodeIndex = undefined;
@@ -295,3 +463,11 @@ canvas.addEventListener("mouseout", () => {
   hoveredNodeIndex = undefined;
   cosmosLabels.update(graph);
 });
+
+// canvas.addEventListener('mousemove', handleCanvasHover);
+
+// canvas.addEventListener('mouseout', () => {
+//     hoveredNodeIndex = undefined;
+//     cosmosLabels.update(graph);
+// });
+

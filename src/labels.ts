@@ -37,8 +37,8 @@ export class CosmosLabels {
           text: label,
           x: screenPosition[0],
           y: screenPosition[1] - (radius + 2),
-          opacity: 1,
-          // color: "#ECE6F0;",
+          opacity: 0.8,
+          // color: "#0147BE;"
         });
       }
     });
