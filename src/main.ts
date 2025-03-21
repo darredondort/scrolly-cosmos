@@ -4,11 +4,17 @@ import { Graph, GraphConfigInterface } from "@cosmograph/cosmos";
 import { select } from "d3-selection";
 import scrollama from "scrollama";
 
+import { createBarChart } from './metadata-bar-chart.ts';
+import { createMultiLineChart } from './metadata-multiline.ts';
+
+
 import {
   pointPositions,
   pointColors,
   pointColorsBicolor,
-  pointSizes,
+  // pointSizes,
+  pointSizesGraph,
+  pointSizesEmbeddings,
   pointLabelToIndex,
   links,
   pointIndexToLabel,
@@ -25,6 +31,43 @@ import { CosmosLabels } from "./labels";
 
 const initialZoom = 1.5;
 let currentZoom = initialZoom;
+
+// let barChart: any;
+// let multiLineChart: any;
+
+// console.log("sentences")
+// console.log(sentences)
+// document.addEventListener('DOMContentLoaded', () => {
+//   createBarChart('barChartCanvas');
+//   createMultiLineChart('multiLineChartCanvas');
+// });
+// document.addEventListener('DOMContentLoaded', () => {
+//   const barChart = createBarChart('barChartCanvas');
+//   const { chart: multiLineChart, filterByTopic, resetChart } = createMultiLineChart('multiLineChartCanvas');
+
+//   document.addEventListener('topicSelected', (event: CustomEvent) => {
+//     const selectedTopic = event.detail;
+//     filterByTopic(selectedTopic);
+//   });
+
+//   const resetButton = document.getElementById('resetButton');
+//   if (resetButton) {
+//     resetButton.addEventListener('click', resetChart);
+//   }
+// });
+
+const barChart = createBarChart('barChartCanvas');
+const { chart: multiLineChart, filterByTopic, resetChart } = createMultiLineChart('multiLineChartCanvas');
+
+document.addEventListener('topicSelected', (event: CustomEvent) => {
+  const selectedTopic = event.detail;
+  filterByTopic(selectedTopic);
+});
+
+document.addEventListener('resetChart', () => {
+  resetChart();
+});
+
 
 // console.log("fixedColors")
 // console.log(fixedColors)
@@ -89,6 +132,7 @@ const steps = [
   "section-4",
   "section-5",
 ].map((id) => document.getElementById(id));
+
 
 // Initialize Scrollama
 scroller
@@ -171,9 +215,11 @@ function handleStepEnter({ index, direction }) {
       disableSimulation: false,
       simulationDecay: 10000,
     });
+    graph.setPointColors(new Float32Array(pointColorsBicolor));
 
-    currentZoom = 0.23;
+    currentZoom = 1.25;
     graph.setZoomLevel(currentZoom, 500);
+    
 
     // Update content visibility
     mainContent.classList.add("invisible");
@@ -213,6 +259,7 @@ function handleStepEnter({ index, direction }) {
       disableSimulation: false,
       simulationDecay: 5000,
     });
+    graph.setPointColors(new Float32Array(pointColorsBicolor));
 
     currentZoom = 1.5;
     graph.setZoomLevel(currentZoom, 500);
@@ -260,9 +307,12 @@ function handleStepEnter({ index, direction }) {
     });
     // Colors by cluster
     graph.setPointColors(new Float32Array(pointColors));
+    graph.setPointSizes(new Float32Array(pointSizesEmbeddings));
 
-    currentZoom = 0.5;
-    graph.setZoomLevel(currentZoom, 500);
+    // graph.zoomToPointByIndex(sentences.length-16, 200, 0.1, false)
+
+    // currentZoom = 0.5;
+    // graph.setZoomLevel(currentZoom, 500);
 
     // Update content visibility
     mainContent.classList.add("visible");
@@ -284,6 +334,10 @@ function handleStepEnter({ index, direction }) {
       cosmosLabels.setVisible(false); // Hide labels in this step
       cosmosLabels.update(graph, true); // Still update positions
     }, 600);
+
+    // prueba 
+    graph.zoomToPointByIndex(sentences.length-10, 800, 0.1, false)
+
   }
 
   if (index === 4) {
@@ -299,7 +353,7 @@ function handleStepEnter({ index, direction }) {
     graph.setPointColors(new Float32Array(pointColors));
 
     // Fit view to show all points
-    graph.fitViewByPointPositions(new Float32Array(pointPositions), 2500, 1.1);
+    // graph.fitViewByPointPositions(new Float32Array(pointPositions), 2500, 1.1);
 
     currentZoom = 0.25;
     graph.setZoomLevel(currentZoom, 500);
@@ -334,8 +388,10 @@ function handleStepEnter({ index, direction }) {
       disableSimulation: false,
       simulationDecay: 10000,
     });
+    graph.setPointColors(new Float32Array(pointColorsBicolor));
 
-    currentZoom = 8;
+
+    currentZoom = 7;
     graph.setZoomLevel(currentZoom, 500);
 
     // Update content visibility
@@ -386,6 +442,47 @@ function handleStepEnter({ index, direction }) {
 function handleStepExit({ index, direction }) {
   console.log(`Exiting step ${index}, direction: ${direction}`);
   steps[index].classList.remove("is-active");
+  if (index === 3 && index === 4) {
+    graph.setConfig({
+      // linkWidth: 0.4,
+      // linkColor: linkColorsHigh,
+      disableSimulation: false,
+      simulationDecay: 5000,
+    });
+
+    // currentZoom = 1.5;
+    // graph.setZoomLevel(currentZoom, 500);
+
+    // Update content visibility
+    // mainContent.classList.add("invisible");
+    // mainContent.classList.add("bottom-layer");
+    // mainContent.classList.remove("visible");
+    // mainContent.classList.remove("top-layer");
+    // canvas.classList.add("top-layer");
+    // canvas.classList.remove("bottom-layer");
+
+    // Set labels visible and update continuously during transition
+    // cosmosLabels.setVisible(true);
+
+    // Force render to update the graph
+    // graph.render();
+
+    // Schedule updates during transition
+    // const transitionDuration = 500;
+    // const updateInterval = 100;
+
+    // for (let time = 0; time <= transitionDuration; time += updateInterval) {
+    //   setTimeout(() => {
+    //     cosmosLabels.update(graph, true);
+    //   }, time);
+    // }
+
+    // Final update after transition
+    // setTimeout(() => {
+    //   ensureTopicNodesTracked();
+    //   cosmosLabels.update(graph, true);
+    // }, transitionDuration + 100);
+  }
 }
 
 window.addEventListener("resize", scroller.resize);
@@ -446,7 +543,7 @@ graph = new Graph(canvas, config);
 graph.setPointPositions(new Float32Array(pointPositions));
 graph.setPointColors(new Float32Array(pointColorsBicolor));
 
-graph.setPointSizes(new Float32Array(pointSizes));
+graph.setPointSizes(new Float32Array(pointSizesGraph));
 graph.setLinks(new Float32Array(links));
 graph.setLinkColors(new Float32Array(linkColorsHigh));
 

@@ -17,6 +17,9 @@ const spaceMax = cosmosSpaceSize / 2 - cosmosSpaceSize * paddingRatio;
 const TOPIC_COLOR = [244 / 255, 253 / 255, 117 / 255];
 const TEXT_COLOR = [81 / 255, 66 / 255, 93 / 255];
 
+let [minSizeDoc, maxSizeDoc]: number[] = [8, 8]
+let [minSizeTopic, maxSizeTopic]: number[] = [48, 80]
+
 // Link color intensities
 const linkColorsHigh = "rgba(244,253,117,0.3)";
 const linkColorsLow = "rgba(244,253,117,0.2)";
@@ -94,7 +97,9 @@ const pointLabelToIndex = new Map<string, number>();
 const pointIndexToLabel = new Map<number, string>();
 const pointPositions: number[] = [];
 const pointColorsBicolor: number[] = [];
-const pointSizes: number[] = [];
+// const pointSizes: number[] = [];
+const pointSizesGraph: number[] = [];
+const pointSizesEmbeddings: number[] = [];
 const pointMetadata: any[] = [];
 
 // Create nodes with scaled positions
@@ -127,19 +132,37 @@ sentences.forEach((p, index) => {
   // linkColorsDisabled.push(1, 0, 0, 0);
 
   // Determine point size based on type and value
+  
+  
+  // graph node sizes
   const isTopic = p.type === "topic";
-  const scaleParams = isTopic
-    ? { scale: 0.8, min: 32, max: 80 }
-    : { scale: 1, min: 18, max: 18 };
+  const scaleParamsGraph = isTopic
+    ? { scale: 0.8, min: minSizeTopic, max: maxSizeTopic }
+    : { scale: 1, min: minSizeDoc*2, max: maxSizeDoc*2 };
 
-  const rawValue = Number(p.value);
+  const rawValueGraph = Number(p.value);
 
-  let size = Math.min(
-    scaleParams.max,
-    Math.max(scaleParams.min, rawValue * scaleParams.scale)
+  let sizeGraph = Math.min(
+    scaleParamsGraph.max,
+    Math.max(scaleParamsGraph.min, rawValueGraph * scaleParamsGraph.scale)
   );
 
-  pointSizes.push(size);
+  pointSizesGraph.push(sizeGraph);
+
+
+    // embedding node sizes
+    const scaleParamsEmbeddings = isTopic
+      ? { scale: 0.8, min: minSizeTopic, max: maxSizeTopic }
+      : { scale: 0.1, min: minSizeDoc, max: maxSizeDoc };
+  
+    const rawValueEmbeddings = Number(p.value);
+  
+    let sizeEmbeddings = Math.min(
+      scaleParamsEmbeddings.max,
+      Math.max(scaleParamsEmbeddings.min, rawValueEmbeddings * scaleParamsEmbeddings.scale)
+    );
+  
+    pointSizesEmbeddings.push(sizeEmbeddings);
 });
 
 // Cluster colors using d3 scheme
@@ -160,6 +183,7 @@ sentences.forEach((p, index) => {
 
 // Cluster colors using color blind prefixed palette
 // Define the fixed color array (RGBA strings)
+let assignedColors: String =[]
 const fixedColors = [
   "rgb(207,153,92)",
   "rgb(87,124,235)",
@@ -207,7 +231,11 @@ const colorScale = (topicLabel: string) => {
     const r = rgbaColor?.r || 0;
     const g = rgbaColor?.g || 0;
     const b = rgbaColor?.b || 0;
-    return `rgba(${r}, ${g}, ${b}, 0.5)`;
+    const assignedColor = `rgba(${r}, ${g}, ${b}, 0.5)`
+    if (!assignedColors.includes(assignedColor)) {
+      assignedColors.push(assignedColor)
+    }
+    return assignedColor;
   } else {
     // Handle the case where the topicLabel is not found (optional)
     console.warn(`Topic label "${topicLabel}" not found in topicLabels.`);
@@ -268,7 +296,9 @@ export {
   linkColorsHigh,
   linkColorsLow,
   linkColorsDisabled,
-  pointSizes,
+  // pointSizes,
+  pointSizesGraph,
+  pointSizesEmbeddings,
   pointLabelToIndex,
   pointIndexToLabel,
   pointMetadata,
@@ -277,4 +307,5 @@ export {
   usableSpaceSize,
   sentences,
   fixedColors,
+  assignedColors
 };

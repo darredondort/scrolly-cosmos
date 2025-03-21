@@ -1,5 +1,7 @@
 // labels.ts
 
+
+
 import { LabelRenderer, LabelOptions } from "@interacta/css-labels";
 import { Graph } from "@cosmograph/cosmos";
 import { pointIndexToLabel, pointMetadata } from "./data";
