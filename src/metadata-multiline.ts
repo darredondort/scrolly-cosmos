@@ -256,7 +256,7 @@ function createMultiLineChart(canvasId: string) {
   }, {} as Record<number, string>);
 
   const datasets = topics.map(topic => ({
-    label: `Topic ${topic}: ${parsedData.find(item => item.topic === topic)?.label || ''}`,
+    label: `Topic ${topic + 1}: ${parsedData.find(item => item.topic === topic)?.label || ''}`,
     data: parsedData.filter(item => item.topic === topic).map(item => ({
       x: item.timestamp,
       y: item.value

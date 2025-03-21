@@ -29,7 +29,7 @@ import {
 
 import { CosmosLabels } from "./labels";
 
-const initialZoom = 1.5;
+const initialZoom = 0.75;
 let currentZoom = initialZoom;
 
 // let barChart: any;
@@ -84,13 +84,17 @@ export const config: GraphConfigInterface = {
   disableZoom: true,
   spaceSize: cosmosSpaceSize, // Use the same space size as in data normalization
   disableSimulation: false,
+  // simulationGravity: 0.02,
   simulationGravity: 0.02,
-  simulationLinkDistance: 200,
+  simulationLinkDistance: 300,
+  // simulationLinkDistance: 500,
   simulationLinkSpring: 1,
-  simulationRepulsion: 0.2,
+  // simulationRepulsion: 0.2,
+  simulationRepulsion: 0.5,
   simulationRepulsionTheta: 1.5,
   simulationFriction: 1.5,
   simulationDecay: 10000,
+  // pointSamplingDistance: 50,
   onSimulationTick: () => {
     const trackedPointPositions = graph.getTrackedPointPositionsMap();
     let i = 0;
@@ -261,7 +265,7 @@ function handleStepEnter({ index, direction }) {
     });
     graph.setPointColors(new Float32Array(pointColorsBicolor));
 
-    currentZoom = 1.5;
+    currentZoom = 0.5;
     graph.setZoomLevel(currentZoom, 500);
 
     // Update content visibility
@@ -335,8 +339,8 @@ function handleStepEnter({ index, direction }) {
       cosmosLabels.update(graph, true); // Still update positions
     }, 600);
 
-    // prueba 
-    graph.zoomToPointByIndex(sentences.length-10, 800, 0.1, false)
+    // zoom to node at the center 
+    graph.zoomToPointByIndex(sentences.length-20, 800, 0.1, false)
 
   }
 

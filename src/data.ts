@@ -1,6 +1,6 @@
 // data.ts
 
-import { sentences } from "./sentences.ts";
+import { sentences } from "./sentences_top20.ts";
 import { scaleLog, scalePow, scaleSymlog } from "d3-scale";
 import { extent } from "d3-array";
 import * as d3 from "d3";
@@ -17,7 +17,7 @@ const spaceMax = cosmosSpaceSize / 2 - cosmosSpaceSize * paddingRatio;
 const TOPIC_COLOR = [244 / 255, 253 / 255, 117 / 255];
 const TEXT_COLOR = [81 / 255, 66 / 255, 93 / 255];
 
-let [minSizeDoc, maxSizeDoc]: number[] = [8, 8]
+let [minSizeDoc, maxSizeDoc]: number[] = [4, 4]
 let [minSizeTopic, maxSizeTopic]: number[] = [48, 80]
 
 // Link color intensities
@@ -45,9 +45,9 @@ function applyNonLinearScaling(
   // Use symlog for data with negative/zero values or clustered points
   if (min < 0 || values.some((v) => v === 0)) {
     const scale = scaleSymlog()
-      // .constant(0.1)
+      .constant(10)
       // .constant(15)
-      .constant(5)
+      // .constant(5)
       .domain([min, max])
       .range(targetRange);
     return values.map((v) => scale(v));

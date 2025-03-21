@@ -1,13 +1,6 @@
-
-
-
-
-
-
-
 import { Chart, ChartConfiguration, ChartTypeRegistry } from "chart.js/auto";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import { sentences } from './sentences';
+import { sentences } from './sentences_top20';
 import { fixedColors, assignedColors } from "./data";
 
 import { Tooltip } from 'chart.js';
@@ -19,6 +12,7 @@ Tooltip.positioners.myCustomPositioner = function(elements, eventPosition) {
     y: 0
   };
 };
+
 
 
 // Ensure Chart.js uses instance mode

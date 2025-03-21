@@ -999,3 +999,377 @@ function externalTooltipHandler(context: any) {
 
 createChart();
 ```
+
+
+### Perplexity AI:
+Now modify the Chart configuration so that the Y axis labels have a bigger font size and are positioned on top of each bar, offset a bit to the right of the start of each bar, to have some space for readability, and also make the bars wider (taller, since it is an horizontal bar chart).
+
+
+### Perplexity AI:
+Lets try another strategy.
+
+Hide the y axis labels and instead populate the labels in fixed custom labels from Chart.js.
+
+Can the custom labels be positions directly on top of their corresponding bar?
+
+Can the custom labels position have an offset to the left so that they are just bit to the right of the start of the horizontal axis?
+
+
+### Perplexity AI:
+Please adjust the current version of the code to change the value of the custom labels to the string formed by `${label}: ${value}` from the data, considering TypeScript compatibility, numbe values of custom label converted to strings.
+
+
+
+### Perplexity AI:
+Propose a strategy to control the length of the bars proportionally, so that there is more room for the labels. It should use linear and not logarithmic scales.
+
+
+### Perplexity AI:
+Please adapt following code so that the x axis is fixed, to an upper limit that is 1.5 times the default needed. Stay as close as the current code and suggest only which lines and blocks to change
+
+
+```
+import { Chart, ChartConfiguration, ChartTypeRegistry } from "chart.js/auto";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+Chart.register(ChartDataLabels);
+
+// import { interpolatePlasma } from 'd3-scale-chromatic';
+
+import { fixedColors, assignedColors } from "./data";
+import { sentences } from './sentences'; 
+
+
+interface DataPoint {
+  label: string;
+  value: number;
+}
+
+async function createChart() {
+  let chData: DataPoint[] = sentences
+  .filter(sentence => sentence.type === "topic")
+  .filter(sentence => sentence.topic != -1)
+  .map(sentence => ({
+    label: sentence.label,
+    value: sentence.value
+  }));
+
+  // Sort data in descending order for better visualization
+  chData.sort((a, b) => b.value - a.value);
+
+  // Calculate color scale based on data values
+  // const maxValue = Math.max(...chData.map((d) => d.value));
+  // const getColor = (value: number) => interpolatePlasma(value / maxValue);
+
+  
+  const config: ChartConfiguration<
+  keyof ChartTypeRegistry,
+  DataPoint[],
+  number
+> = {
+  type: "bar",
+  data: {
+    labels: chData.map((row) => row.label),
+    datasets: [
+      {
+        label: "chart-01",
+        data: chData.map((row) => row.value),
+        backgroundColor: fixedColors,
+        borderColor: "rgba(40, 32, 48, 0.1)",
+        borderWidth: 1,
+        barThickness: 28, // Increase bar width (height in horizontal chart)
+      },
+    ],
+  },
+  options: {
+    indexAxis: "y",
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        enabled: false,
+        external: externalTooltipHandler,
+      },
+      legend: {
+        display: false,
+      },
+      // datalabels: {
+      //   // color: '#000',
+      //   color: '##ece6f0',
+      //   anchor: 'start',
+      //   align: 'end',
+      //   offset: 16,
+      //   font: {
+      //     size: 24,
+      //     weight: 'bold'
+      //   },
+      //   formatter: function(value) {
+      //     return value;
+      //   }
+      // }
+      datalabels: {
+        color: '#ECE6F0',
+        anchor: 'end',
+        align: 'end',
+        offset: 16,
+        font: {
+          size: 14
+        },
+        formatter: function(value: number, context: any) {
+          const label = context.chart.data.labels[context.dataIndex];
+          return `${label}: ${value.toString()}`;
+        }
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Value",
+        },
+        grid: {
+          color: "rgba(200, 200, 200, 0.3)",
+          display: false,
+        },
+      },
+      y: {
+        ticks: {
+          display: false, // Hide Y axis values
+          autoSkip: false,
+          callback: function (value) {
+            const label = this.getLabelForValue(value as number);
+            return label.length > 100 ? label.substr(0, 180) + "..." : label;
+          },
+          color: "#ECE6F0",
+          font: {
+            size: 14, // Increase font size
+          },
+          padding: 20, // Add padding to move labels to the right
+        },
+        grid: {
+          color: "rgba(200, 200, 200, 0.3)",
+          display: false,
+        },
+        position: 'top', // Position labels on top of bars
+      },
+    },
+  },
+};
+
+
+  const ctx = document.getElementById("chart-01") as HTMLCanvasElement;
+  new Chart(ctx, config);
+}
+
+// Custom tooltip handler
+function externalTooltipHandler(context: any) {
+  const { chart, tooltip } = context;
+  let tooltipEl = chart.canvas.parentNode.querySelector("div");
+
+  if (!tooltipEl) {
+    tooltipEl = document.createElement("div");
+    tooltipEl.style.background = "rgba(40, 32, 48, 0.7)";
+    tooltipEl.style.borderRadius = "3px";
+    tooltipEl.style.color = "#ECE6F0";
+    tooltipEl.style.opacity = "1";
+    tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.position = "absolute";
+    tooltipEl.style.transform = "translate(-50%, 0)";
+    tooltipEl.style.transition = "all .1s ease";
+
+    const table = document.createElement("table");
+    table.style.margin = "0px";
+
+    tooltipEl.appendChild(table);
+    chart.canvas.parentNode.appendChild(tooltipEl);
+  }
+
+  if (tooltip.opacity === 0) {
+    tooltipEl.style.opacity = "0";
+    return;
+  }
+
+  if (tooltip.body) {
+    const titleLines = tooltip.title || [];
+    const bodyLines = tooltip.body.map((b: any) => b.lines);
+
+    const tableHead = document.createElement("thead");
+    titleLines.forEach((title: string) => {
+      const tr = document.createElement("tr");
+      tr.style.borderWidth = "0";
+
+      const th = document.createElement("th");
+      th.style.borderWidth = "0";
+      const text = document.createTextNode(title);
+
+      th.appendChild(text);
+      tr.appendChild(th);
+      tableHead.appendChild(tr);
+    });
+
+    const tableBody = document.createElement("tbody");
+    bodyLines.forEach((body: string[], i: number) => {
+      const colors = tooltip.labelColors[i];
+
+      const tr = document.createElement("tr");
+      tr.style.backgroundColor = "inherit";
+      tr.style.borderWidth = "0";
+
+      const td = document.createElement("td");
+      td.style.borderWidth = "0";
+
+      const text = document.createTextNode(body.join(": "));
+
+      td.appendChild(text);
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    });
+
+    const tableRoot = tooltipEl.querySelector("table");
+    while (tableRoot.firstChild) {
+      tableRoot.firstChild.remove();
+    }
+
+    tableRoot.appendChild(tableHead);
+    tableRoot.appendChild(tableBody);
+  }
+
+  const { offsetLeft: positionX, offsetTop: positionY } = chart.canvas;
+
+  tooltipEl.style.opacity = "1";
+  tooltipEl.style.left = positionX + tooltip.caretX + "px";
+  tooltipEl.style.top = positionY + tooltip.caretY + "px";
+  tooltipEl.style.font = tooltip.options.bodyFont.string;
+  tooltipEl.style.padding =
+    tooltip.options.padding + "px " + tooltip.options.padding + "px";
+}
+
+createChart();
+```
+
+
+
+
+
+
+
+
+
+### Perplexity AI:
+This code used the topics_over_time method to produce a dataframe of topics with bins based on a timestamps array. Please search how the bins parameter works and if it is possible to have bins by year (data being used is from 2016 to 2024)
+
+```
+timestamp_list = df_clean_drop['time'].tolist()
+# Create timestamp list and process topic over time in topic model (*may take a while for numerous docs, 10,000 documents = 6 mins aprox.)
+# timestamps = df_clean_drop['time'].tolist()
+time_format="%Y-%m-%dT%H:%M:%SZ"
+topics_over_time = topic_model.topics_over_time(docs, timestamp_list, datetime_format=time_format, nr_bins=20)
+```
+
+
+### Perplexity AI:
+Please write a detailed guide, for someone who has never used vercel before or has not much experience with deploying apps, on how to deploy this Vite app. This are the contents of is package.json
+
+```
+{
+  "name": "cosmos-point-labels",
+  "private": true,
+  "version": "0.0.0",
+  "description": "This example shows how to use the `trackPointPositionsByIndices` feature of Cosmos and implement point labels on top of it.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "parcel": "^2.6.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1"
+  },
+  "dependencies": {
+    "@cosmograph/cosmos": "^2.0.0-beta.17",
+    "@cubejs-client/core": "^0.31.0",
+    "@interacta/css-labels": "^0.1.1",
+    "@types/chart.js": "^2.9.41",
+    "chart.js": "^4.4.8",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "d3": "^7.9.0",
+    "d3-scale-chromatic": "^3.1.0",
+    "date-fns": "^4.1.0",
+    "scrollama": "^3.2.0"
+  },
+  "keywords": [
+    "labels",
+    "cosmograph",
+    "graph",
+    "network",
+    "cosmos"
+  ]
+}
+```
+
+
+
+### Perplexity AI:
+
+Now we are moving to a different chart. Write the code for a different chart, a multiple line chart, based on another data source from another sentencesTime.ts file with the following structure. Make the following data parsing for the multiline graph:
+
+- create TypeScript date objects with the timestamp values, assign them to the horizontal axis.
+- create custom data labels over the lines with the value of the first word inside
+ Words, by converting into an array the Words value of each object and taking its first string element as a label.
+- adjust numeric Y axis by Frequency values.
+
+```
+export const sentencesTime: {
+  id: string;
+  label: string;
+  topic: number;
+  topic_label_str: string;
+  value: number;
+  type: string;
+  x: number;
+  y: number;
+}[] = [
+  {
+    "Topic": -1,
+    "Words": "xarxes, sentit, manera, plantacio escocells cosa caldria adequar ordenanca, projectes barris xarxes",
+    "Frequency": 1,
+    "Timestamp": "2018-04-02 03:47:00.144"
+  },
+  ...]
+```
+
+Propose an strategy so that this can be one of many different Charts made with Chart.js that are being enabled and disabled with animated transitions in when entering different sections of the page where they are positioned, as triggered by scrollama steps.
+
+
+### Perplexity AI:
+Check following code of two different charts, bar chart and multiply, and try to keep them exactly as they are, but compatible in the same page as instance mode of chart.js that don't interfere among each others namespace.
+
+Now propose a functionality that handles from the main.ts file the toggle adding and removing classes of "visible" and "invisible" to boths chart canvases, and in each visualization file add the funtionality of triggering an animated visual “reload”, stretitching from 0 both bars and lines respectively in each chart to their final position.
+
+
+### Perplexity AI:
+Analyze the current version of the charts and main.ts code files and propose an strategy to user a click on a bar as filter for the respective line. They share the topic values, but with a minor difference in their keys. For sentences-time.ts the property name is "Topic" and for sentences.ts the property name is "topic".
+
+Uncaught ReferenceError: originalDatasets is not defined
+
+It is not returning an error now, but it stillis not working. When clicking on a bar, all the lines dissappear, it may not be doing the match among topic values in each dataset correctly.
+
+This is the current code of each file:
+
+[ metadata-bar-chart.ts ]
+[ metadata-multiline.ts ]
+
+Write the code just to keep the y axis of the multiline fixed
+
+Add functionality so that, once the graph is filtered, a click in any of the charts while not over any bar or lines resets the filter and shows all lines again
+
+
+### Perplexity AI:
+Please check the current version of the code and explain what  to change for the filtering and reseting to work. Clicks on bars shoud filter lines. Click in outside bars or lines should reset and bring back all the lines.
+
+
+### Perplexity AI:
+Propose and strategy to that the have the same colors assigned to each topic from the fixedColors array imported from data.ts
